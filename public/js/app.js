@@ -676,8 +676,8 @@ $("#scrRoom").addEventListener("click",e=>{
   const btn=e.target.closest("[data-kick-id]");if(!btn||!Net.socket)return;
   const r=Net.room;if(!r||r.hostId!==Net.myId||r.quick||r.status==="playing")return;
   btn.disabled=true;
-  Net.socket.emit("room:kick",{targetId:btn.dataset.kickId},res=>{
-    if(!res||!res.ok){btn.disabled=false;toast(res&&res.error||"踢出失败");}
+  Net.socket.timeout(4000).emit("room:kick",{targetId:btn.dataset.kickId},(err,res)=>{
+    if(err||!res||!res.ok){btn.disabled=false;toast(err?"踢出无响应，请检查服务器是否已更新并重启":res&&res.error||"踢出失败");}
   });
 });
 $("#roomCodeBtn").addEventListener("click",async()=>{
