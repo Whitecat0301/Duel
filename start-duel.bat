@@ -29,7 +29,8 @@ if errorlevel 1 (
 
 "%NODE_EXE%" -e "fetch('http://127.0.0.1:'+process.env.PORT+'/healthz',{signal:AbortSignal.timeout(1500)}).then(r=>r.json()).then(x=>process.exit(x.ok?0:1)).catch(()=>process.exit(1))" >nul 2>nul
 if not errorlevel 1 (
-  echo Duel is already running at http://127.0.0.1:%PORT%/
+  echo A Duel server is already running at http://127.0.0.1:%PORT%/
+  echo To use this folder, stop the other server window first, then run this script again.
   pause
   exit /b 0
 )
