@@ -69,7 +69,7 @@ const PROFILES={
     {id:"remove",name:"消除限制",cost:4,kind:"spell",art:"⊘",text:"所有敌方单位失去嘲讽，敌方英雄失去免疫，对敌方英雄造成 3 点伤害。",effect:"removeRestrict",n:1,limit:1,rarity:"elite"}
   ]},
   "七星":{faction:"彗星国 · 架子班",style:"法力压制 · 出牌封锁 · 慢节奏斩杀",hp:34,cards:[
-    {id:"cometWatcher",name:"彗星观察者",cost:2,kind:"unit",art:"👁",atk:1,hp:3,text:"每当你获得 1 张手牌，恢复 1 点生命。",effect:"drawHeal",n:2,limit:3,rarity:"rare"},
+    {id:"cometWatcher",name:"彗星观察者",cost:2,kind:"unit",art:"👁",atk:1,hp:3,text:"每当你获得 1 张手牌，恢复 2 点生命。",effect:"drawHeal",n:2,limit:3,rarity:"rare"},
     {id:"sentinel",name:"星轨哨兵",cost:2,kind:"unit",art:"盾",atk:1,hp:3,text:"嘲讽。部署：获得 2 点护甲。",taunt:true,effect:"armor2",n:2,limit:3,rarity:"rare"},
     {id:"messenger",name:"彗星信使",cost:2,kind:"unit",art:"◇",atk:2,hp:3,text:"部署：抽 1 张牌，恢复 1 点生命。",effect:"drawHeal1",n:2,limit:3,rarity:"rare"},
     {id:"bulwark",name:"星尘壁垒",cost:3,kind:"unit",art:"▥",atk:2,hp:6,text:"嘲讽。部署：恢复 2 点生命。",taunt:true,effect:"heal2",n:1,limit:2,rarity:"special",fx:"sp_guard"},
@@ -272,7 +272,7 @@ const PROFILES={
     {id:"sovereign",name:"白猫·空白终章",cost:6,kind:"unit",art:"♛",atk:6,hp:6,text:"部署：对敌方英雄造成 4 点伤害；本局每销毁 1 张敌方卡牌，伤害 +1（至多 18 点）。",effect:"whiteFinal",n:1,limit:1,rarity:"elite"},
     {id:"spark",name:"撕掉一页",cost:1,kind:"spell",art:"✦",text:"销毁敌方牌库顶的 2 张牌，抽 1 张牌。",effect:"whiteDeckDraw",n:4,limit:4,rarity:"common"},
     {id:"surge",name:"强制翻页",cost:2,kind:"spell",art:"⇧",text:"销毁敌方牌库顶的 2 张牌，再强制对手抽 1 张并销毁抽到的牌；牌库为空则触发疲劳。",effect:"whiteForce1",n:2,limit:3,rarity:"rare"},
-    {id:"insight",name:"没收手稿",cost:3,kind:"spell",art:"◎",text:"随机销毁敌方手牌的 1 张牌；若其手牌为空，改为销毁牌库顶的 1 张牌。",effect:"whiteHand1",n:1,limit:2,rarity:"special"},
+    {id:"insight",name:"没收手稿",cost:2,kind:"spell",art:"◎",text:"随机销毁敌方手牌的 1 张牌；若其手牌为空，改为销毁牌库顶的 2 张牌。抽 1 张牌。",effect:"whiteConfiscate",n:1,limit:2,rarity:"special"},
     {id:"rally",name:"末页催读",cost:3,kind:"spell",art:"✧",text:"强制对手抽 2 张牌并销毁抽到的牌；牌库为空时每次抽牌触发疲劳。你获得 3 点护甲。",effect:"whiteForce2",n:1,limit:3,rarity:"rare"},
     {id:"shelter",name:"缺页追击",cost:4,kind:"spell",art:"◈",text:"对敌方英雄造成 3 点伤害；本局每销毁 2 张敌方卡牌，伤害 +1（至多 10 点）。",effect:"whiteBurst",n:1,limit:2,rarity:"special",fx:"sp_strike"},
     {id:"pollute",name:"废稿雨",cost:4,kind:"spell",art:"☣",text:"随机将敌方牌库中的 2 张非垃圾牌变成【垃圾】。",effect:"whiteCorruptDeck",n:2,limit:2,rarity:"special"},
@@ -385,11 +385,8 @@ function defaultDeck(hero){
   return list;
 }
 
-/* ---- 预设卡组：目前只有七星有两套（衰减流 / 星联邦流），其余卡牌师只保留官方推荐那一套 ---- */
+/* ---- 多套预设卡组：AI 随机选一套；单人模式可选敌方卡组 ---- */
 /* 第二套卡组优先装入主题牌，再按官方推荐卡组补足 40 张，始终遵守携带上限。 */
-/* 说明：其余卡牌师的第二套预设（政委整编 / 策反突破 / 皇冠潜行 / 金库控制 / 火船炮击 /
-   情报开发 / 覆盖轰炸 / 回收巨像 / 污染审判）实测偏弱或未成型，已撤下，本函数暂无人调用，
-   保留给以后重新设计第二套卡组时使用。 */
 function focusedDeck(hero,focus){
   const pool=PROFILES[hero].cards,list=[],count={};
   const add=id=>{
@@ -407,8 +404,14 @@ function focusedDeck(hero,focus){
   return list;
 }
 const DECK_PRESETS={
-  "苏苏":{"俄布海":defaultDeck("苏苏")},
-  "字母":{"新式铺场":defaultDeck("字母")},
+  "苏苏":{
+    "俄布海":defaultDeck("苏苏"),
+    "政委整编":focusedDeck("苏苏",["consolidate","red","redcharge","mobilize","vanguard","october","rally","forward","warcom","redOfficer","peoplearmy","kazakh","reddawn"])
+  },
+  "字母":{
+    "新式铺场":defaultDeck("字母"),
+    "策反突破":focusedDeck("字母",["rebelWeakest","rebelLowest","rebel","takeover","break","order","tacticsquad","commando","shadow","evasion","disruption","armored","heavytank","remove"])
+  },
   "七星":{
     "衰减流":defaultDeck("七星"),
     "星联邦流":[
@@ -421,13 +424,34 @@ const DECK_PRESETS={
       "cometTutor","cometTutor","tune","tune"
     ]
   },
-  "核弹":{"禁忌召唤":defaultDeck("核弹")},
-  "猪瘟鱼":{"偷钱逃跑":defaultDeck("猪瘟鱼")},
-  "八幡":{"海盗速攻":defaultDeck("八幡")},
-  "045":{"架子班召集":defaultDeck("045")},
-  "下水":{"火炮阵地":defaultDeck("下水")},
-  "绘梨衣":{"废料转化":defaultDeck("绘梨衣")},
-  "白猫":{"毁稿疲劳":defaultDeck("白猫")}
+  "核弹":{
+    "禁忌召唤":defaultDeck("核弹"),
+    "皇冠潜行":focusedDeck("核弹",["superman","ritual","filter","whisper","tea","escape","retreat","forbiddenknowledge","revenge","airstrike","vanish","gaze","resonance","barrier"])
+  },
+  "猪瘟鱼":{
+    "偷钱逃跑":defaultDeck("猪瘟鱼"),
+    "金库控制":focusedDeck("猪瘟鱼",["vaultguard","vault","vaultgate","bribelord","taxman","steal","greyincome","fakebooks","count","escape","vaultfill","accountant","transfer"])
+  },
+  "八幡":{
+    "海盗速攻":defaultDeck("八幡"),
+    "火船炮击":focusedDeck("八幡",["firebomb","fireship","revengepirate","gunner","rum","raider","stalker","intimidate","boarding","finish","king","wallbreaker","raid"])
+  },
+  "045":{
+    "架子班召集":defaultDeck("045"),
+    "情报开发":focusedDeck("045",["develop","adapt","network","handoff","intel","advisor","cardmaker","blueprint","copycrown","meeting","upgrade","summoncall","namecardsummon","taojin","qixing","baimao","highcommand"])
+  },
+  "下水":{
+    "火炮阵地":defaultDeck("下水"),
+    "覆盖轰炸":focusedDeck("下水",["cover","volley","prepfire","saturation","bombardcmd","recon","resupply","ammo","smallcannon","cannon","battery","commander","howitzer","emplacement"])
+  },
+  "绘梨衣":{
+    "废料转化":defaultDeck("绘梨衣"),
+    "回收巨像":focusedDeck("绘梨衣",["colossus","fortress","corner","shredder","station","recycle","sweep","rummage","trade","upcycle","remelt","stocktake","eriyi","crown","guard"])
+  },
+  "白猫":{
+    "毁稿疲劳":defaultDeck("白猫"),
+    "污染审判":focusedDeck("白猫",["editor","pollute","flood","guardian","rally","surge","engine","reserve","night","inspector","medic","mend","shredstorm","sovereign","sentinel"])
+  }
 };
 /* 该卡牌师的预设卡组列表 */
 function presets(hero){return DECK_PRESETS[hero]||null;}
