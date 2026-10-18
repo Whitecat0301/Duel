@@ -33,8 +33,14 @@ self.onmessage=async({data})=>{
     if(o.mode==="all")for(let i=0;i<heroes.length;i++)for(let j=i+1;j<heroes.length;j++)plans.push([heroes[i],heroes[j]]);
     else if(o.mode==="hero")heroes.filter(h=>h!==o.heroA).forEach(h=>plans.push([o.heroA,h]));
     else plans.push([o.heroA,o.heroB]);
-    const total=plans.length*o.games,pairs=[],stats={},presetStats={};
+    const total=plans.length*o.games,pairs=[],stats={},presetStats={},history={},tallies={};
+    const sampleStep=Math.max(1,Math.ceil((o.mode==="match"?o.games:(heroes.length-1)*o.games)/200));
     const getStat=(key,hero)=>stats[key]||(stats[key]=W.mkStat(hero));
+    function record(key,won,draw){
+      const t=tallies[key]||(tallies[key]={games:0,wins:0,draws:0});
+      t.games++;if(won)t.wins++;if(draw)t.draws++;
+      if(t.games===1||t.games%sampleStep===0)(history[key]||(history[key]=[])).push({game:t.games,winRate:rate(t.wins,t.draws,t.games)});
+    }
     function countPreset(hero,preset,foe,won,draw){
       const key=[hero,preset,foe].join("\u0000");
       const row=presetStats[key]||(presetStats[key]={hero,preset,foe,games:0,wins:0,draws:0});
@@ -51,6 +57,9 @@ self.onmessage=async({data})=>{
         const r=W.playOne(first?a:b,first?b:a,{decks:first?[deckA,deckB]:[deckB,deckA],ai:first?[aiA,aiB]:[aiB,aiA]});
         const ia=first?0:1,ib=1-ia;
         if(r.winner===ia)winsA++;else if(r.winner===ib)winsB++;else draws++;
+        const isDraw=r.winner!==ia&&r.winner!==ib;
+        record(o.mode==="match"?"A":a,r.winner===ia,isDraw);
+        record(o.mode==="match"?"B":b,r.winner===ib,isDraw);
         countPreset(a,r.presets[ia],b,r.winner===ia,r.winner!==ia&&r.winner!==ib);
         countPreset(b,r.presets[ib],a,r.winner===ib,r.winner!==ia&&r.winner!==ib);
         W.merge(getStat(o.mode==="match"?"A":a,a),r.st[ia]);
@@ -60,8 +69,12 @@ self.onmessage=async({data})=>{
       }
       pairs.push({a,b,winsA,winsB,draws,games:o.games,rateA:rate(winsA,draws,o.games),rateB:rate(winsB,draws,o.games)});
     }
-    const reports={};for(const key in stats)reports[key]=report(stats[key],o.minSample||1);
+    const reports={};for(const key in stats){
+      reports[key]=report(stats[key],o.minSample||1);
+      const t=tallies[key],points=history[key]||(history[key]=[]);
+      if(t&&(!points.length||points[points.length-1].game!==t.games))points.push({game:t.games,winRate:rate(t.wins,t.draws,t.games)});
+    }
     const presets=Object.values(presetStats).map(row=>({...row,winRate:rate(row.wins,row.draws,row.games)}));
-    self.postMessage({type:"done",result:{mode:o.mode,pairs,stats:reports,presets,total,gamesPerPair:o.games}});
+    self.postMessage({type:"done",result:{mode:o.mode,pairs,stats:reports,presets,history,total,gamesPerPair:o.games}});
   }catch(e){self.postMessage({type:"error",message:e&&e.message||String(e)});}
 };

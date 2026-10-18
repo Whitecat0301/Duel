@@ -31,14 +31,22 @@ async function run(options){
   assert.equal(match.result.total,2);assert.equal(match.result.pairs.length,1);
   assert.equal(match.result.pairs[0].winsA+match.result.pairs[0].winsB+match.result.pairs[0].draws,2);
   assert.equal(match.result.stats.A.games,2);assert.equal(match.result.stats.B.games,2);
+  for(const key of ["A","B"]){
+    const points=match.result.history[key];
+    assert.equal(points[0].game,1);
+    assert.equal(points.at(-1).game,match.result.stats[key].games);
+    assert.equal(points.at(-1).winRate,match.result.stats[key].winRate);
+  }
   assert.ok(match.result.presets.some(p=>p.hero==="七星"&&p.preset==="衰减流"&&p.games===2));
   assert.ok(match.result.presets.some(p=>p.hero==="白猫"&&p.preset==="毁稿疲劳"&&p.games===2));
   assert.ok(match.progress.length>0);
   const hero=await run({...base,mode:"hero",games:1,decks:{七星:"默认",白猫:"毁稿疲劳"}});
   assert.equal(hero.result.pairs.length,W.heroes.length-1);
   assert.equal(hero.result.stats["七星"].games,W.heroes.length-1);
+  assert.equal(hero.result.history["七星"].at(-1).game,W.heroes.length-1);
   const all=await run({...base,mode:"all",games:1,decks:{七星:"星联邦流"}});
   assert.equal(all.result.pairs.length,W.heroes.length*(W.heroes.length-1)/2);
   assert.equal(all.result.stats["七星"].games,W.heroes.length-1);
+  assert.equal(all.result.history["七星"].at(-1).winRate,all.result.stats["七星"].winRate);
   console.log("WINRATE WEB TEST PASSED");
 })().catch(e=>{console.error(e);process.exitCode=1;});
